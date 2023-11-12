@@ -12,9 +12,11 @@
 #define SW 4
 
 enum class Menu {
+  MainMenu,
   MainWindow,
   SettingsValue,
   StartStopSettings
+  
 };
 
 #include "GyverEncoder.h"
@@ -31,42 +33,42 @@ int8_t screenPos = 0; // номер "экрана"
 Menu menu;
 
 // названия параметров
-String settingsValue[]  = {
-  "Temp-1",
-  "Time-1",
-  "Temp-2",
+String settingsValue[]  = { //Перечень окна с натройками
+  "Time-1", //Время 
+  "Temp-1", //Температура
   "Time-2",
-  "Temp-3",
+  "Temp-2",
   "Time-3",
-  "Temp-4",
+  "Temp-3",
   "Time-4",
-  "Temp-5",
+  "Temp-4",
   "Time-5",
-  "Temp-6",
+  "Temp-5",
   "Time-6",
+  "Temp-6",
   "Exit",
 };
 
-String settingsMainMenu[]  = {
+String settingsMainMenu[]  = { // Главное окно меню
   "Setting",
   "Window",
   "Stop",
 };
 
-String settingsStart[]  = {
+String settingsStart[]  = { //Меню запуска програмы
   "Stop"
   "Start",
 };
 
 void setup() {
-  Serial.begin(9600);
-  enc1.setType(TYPE2);
+  Serial.begin(9600); //Волшебная цифра 
+  enc1.setType(TYPE2); //Тип энкодера
 
   lcd.init();
   lcd.backlight();
 
-  menu = Menu::MainWindow;
-  //printMainWindow();
+  menu = Menu::MainMenu;
+
   printMainMenu();
 }
 
@@ -74,7 +76,7 @@ void loop() {
   enc1.tick();
 
   switch (menu) {
-    case Menu::MainWindow:
+    case Menu::MainMenu:
       if (enc1.isTurn()) {
         int increment = 0;  // локальная переменная направления
           // получаем направление   
@@ -88,7 +90,8 @@ void loop() {
         printMainMenu();
       }
       if (enc1.isClick()){
-        menu = Menu::SettingsValue;        
+        menu = Menu::SettingsValue;
+        printSettingsValue();
       }
       break;
     
@@ -108,12 +111,12 @@ void loop() {
         if (enc1.isLeftH()) increment = -1;
         vals[arrowPos] += increment;  // меняем параметры
       }
-      if (enc1.isClick() && arrowPos == SETTINGS_AMOUNT-1){
-        menu = Menu::MainWindow;     
-      }
-
       printSettingsValue();
-  }
+      }
+      if (enc1.isClick() && arrowPos == SETTINGS_AMOUNT-1){
+        menu = Menu::MainMenu;
+        printMainMenu();   
+        }
       break;
     case Menu::StartStopSettings:
       //TODO
@@ -128,7 +131,7 @@ void printMainWindow(){
 }
 
 //_____________________
-void printSettingsValue() {
+void printSettingsValue() {  //Функция для вывода на экран меню настроек
   lcd.clear();  
   screenPos = arrowPos / LINES;   // ищем номер экрана (0..3 - 0, 4..7 - 1)
 
@@ -155,7 +158,7 @@ void printSettingsValue() {
 
 //_____________________
 void printMainMenu(){
-    lcd.clear();  
+  lcd.clear();  
   screenPos = arrowPos / LINES;   // ищем номер экрана (0..3 - 0, 4..7 - 1)
 
   for (byte i = 0; i < LINES; i++) {  // для всех строк
