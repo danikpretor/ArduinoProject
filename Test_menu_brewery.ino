@@ -26,6 +26,7 @@ Encoder enc1(CLK, DT, SW);  // для работы c кнопкой
 LiquidCrystal_I2C lcd(0x27, 16, 2); // адрес 0x27 или 0x3f
 
 
+
 int vals[SETTINGS_SETTING];  // массив параметров
 int8_t arrowPos = 0;
 int8_t screenPos = 0; // номер "экрана"
@@ -48,7 +49,7 @@ String settingsValue[]  = { //Перечень окна с натройками
   "Temp-6",
   "Exit",
 };
-
+bool StrStp = 0;
 String settingsMainMenu[]  = { // Главное окно меню
   "Setting",
   "Window",
@@ -67,16 +68,25 @@ void setup() {
   lcd.init();
   lcd.backlight();
 
+  //menu = Menu::MainMenu;
   menu = Menu::MainMenu;
-
   printMainMenu();
+  lcd.clear();
+  
+  Serial.println("Start");
+  
+  lcd.clear();
+  lcd.setCursor(0, 0); lcd.print("Brewery V 0.1");
+  lcd.setCursor(0, 1); lcd.print("Turn the handle");
+  
 }
 
 void loop() {
   enc1.tick();
-
+  
   switch (menu) {
-    case Menu::MainMenu:
+
+    case Menu::MainMenu: //Главное Меню
       if (enc1.isTurn()) {
         int increment = 0;  // локальная переменная направления
           // получаем направление   
@@ -87,15 +97,32 @@ void loop() {
 
         increment = 0;  // обнуляем инкремент
 
-        printMainMenu();
+        printMainMenu(); //Выводим на экран соответсвующие меню
+        Serial.println(arrowPos);
+        
       }
-      if (enc1.isClick()){
-        menu = Menu::SettingsValue;
-        printSettingsValue();
+      if (enc1.isClick()) {
+        if (0 == arrowPos) {
+          lcd.clear();
+          printSettingsValue();
+          menu = Menu::SettingsValue;
+        }
+        if (1 == arrowPos) {
+          lcd.clear();
+          printMainWindow();
+          menu = Menu::MainWindow;
+        }
+        if (2 == arrowPos) {
+          menu = Menu::StartStopSettings;
+          lcd.clear();
+          printMainMenu();
+
+        }
       }
+
       break;
-    
-    case Menu::SettingsValue:
+
+    case Menu::SettingsValue: //Меню настроек
       if (enc1.isTurn()) {
       int increment = 0;  // локальная переменная направления
     
@@ -111,22 +138,54 @@ void loop() {
         if (enc1.isLeftH()) increment = -1;
         vals[arrowPos] += increment;  // меняем параметры
       }
+      
       printSettingsValue();
       }
-      if (enc1.isClick() && arrowPos == SETTINGS_AMOUNT-1){
+      if (enc1.isClick() && arrowPos == SETTINGS_AMOUNT-1){ //По нажатию на Exet мы выходим из соответсвующего меню
+        lcd.clear();
+        printMainMenu(); 
+        Serial.println("SettingsValue");
         menu = Menu::MainMenu;
-        printMainMenu();   
         }
       break;
+
+    case Menu::MainWindow:
+      printMainWindow();
+      if (enc1.isClick()){ //По нажатию проваливаемся в соответсвующее меню
+        lcd.clear();
+        Serial.println("MainWindow");
+        printMainMenu();  
+        menu = Menu::MainMenu;
+      }
+      
+      break;   
     case Menu::StartStopSettings:
-      //TODO
+      if (0 == StrStp) {
+        StrStp = 1;
+        settingsMainMenu[2] = "Start";
+        Serial.print("StrStp ");
+        Serial.println(StrStp);
+      }
+      else {
+        StrStp = 0;
+        settingsMainMenu[2] = "Stop";
+        Serial.print("StrStp ");
+        Serial.println(StrStp);
+      }
+      lcd.clear();
+      printMainMenu();
+      menu = Menu::MainMenu;
       break;
     }
 }
 
 //_____________________
 void printMainWindow(){
-  //TODO
+  
+  lcd.setCursor(0, 0); lcd.print("t:"); lcd.print("40"); lcd.print("C");
+  lcd.setCursor(8, 0); lcd.print("T:"); lcd.print("00"); lcd.print(":");lcd.print("00");
+  lcd.setCursor(0, 1); lcd.print("t:"); lcd.print("60"); lcd.print("C");
+  lcd.setCursor(8, 1); lcd.print("T:"); lcd.print("60"); 
 
 }
 
@@ -177,12 +236,6 @@ void printMainMenu(){
 
 }
 
-
-//_____________________
-void printStartStopSettings() {
-  //TODO
-}
-
 void printGUI() {
   lcd.clear();  
   screenPos = arrowPos / LINES;   // ищем номер экрана (0..3 - 0, 4..7 - 1)
@@ -202,6 +255,5 @@ void printGUI() {
     lcd.print(": ");
     lcd.print(vals[LINES * screenPos + i]);
   }
-
 
 }
