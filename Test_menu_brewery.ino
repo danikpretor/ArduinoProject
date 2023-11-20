@@ -29,6 +29,7 @@ LiquidCrystal_I2C lcd(0x27, 16, 2); // адрес 0x27 или 0x3f
 
 int vals[SETTINGS_SETTING];  // массив параметров
 int8_t arrowPos = 0;
+
 int8_t screenPos = 0; // номер "экрана"
 
 Menu menu;
@@ -65,24 +66,23 @@ void setup() {
   Serial.begin(9600); //Волшебная цифра 
   enc1.setType(TYPE2); //Тип энкодера
 
-  lcd.init();
-  lcd.backlight();
+  lcd.init(); 
+  lcd.backlight(); 
 
-  //menu = Menu::MainMenu;
-  menu = Menu::MainMenu;
-  printMainMenu();
-  lcd.clear();
+  menu = Menu::MainMenu; //Заходим сразу в главное меню
+  printMainMenu(); // Отображаем на экране главное меню
+  lcd.clear(); //предпусковое очищение экрана
   
-  Serial.println("Start");
-  
-  lcd.clear();
+  Serial.println("Start"); 
+  //Ещё раз чистим экран и выводим привью
+  lcd.clear(); 
   lcd.setCursor(0, 0); lcd.print("Brewery V 0.1");
   lcd.setCursor(0, 1); lcd.print("Turn the handle");
   
 }
 
 void loop() {
-  enc1.tick();
+  enc1.tick(); 
   
   switch (menu) {
 
@@ -101,7 +101,7 @@ void loop() {
         Serial.println(arrowPos);
         
       }
-      if (enc1.isClick()) {
+      if (enc1.isClick()) { //По клику на энкодер проваливаемся в соответсвующие меню
         if (0 == arrowPos) {
           lcd.clear();
           printSettingsValue();
@@ -116,26 +116,24 @@ void loop() {
           menu = Menu::StartStopSettings;
           lcd.clear();
           printMainMenu();
-
         }
       }
-
       break;
-
+    
     case Menu::SettingsValue: //Меню настроек
       if (enc1.isTurn()) {
       int increment = 0;  // локальная переменная направления
-    
       // получаем направление   
       if (enc1.isRight()) increment = 1;
       if (enc1.isLeft()) increment = -1;
       arrowPos += increment;  // двигаем курсор  
       arrowPos = constrain(arrowPos, 0, SETTINGS_AMOUNT - 1); // ограничиваем
-
       increment = 0;  // обнуляем инкремент
+      
       if (arrowPos < SETTINGS_SETTING) {
         if (enc1.isRightH()) increment = 1;
         if (enc1.isLeftH()) increment = -1;
+        
         vals[arrowPos] += increment;  // меняем параметры
       }
       
