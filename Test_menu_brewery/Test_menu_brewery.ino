@@ -41,15 +41,15 @@ enum class Menu {
 };
 
 struct Setting {
-    uint16_t time_val = 0;
-    uint16_t temp_val = 0;
-    String time = "Time-";
-    String temp = "Temp-";
+  uint16_t time_val = 0;
+  uint16_t temp_val = 0;
+  String time = "Time-";
+  String temp = "Temp-";
 };
 
 struct SettingsWindow {
-    Setting settings[SETTINGS_AMOUNT];
-    String exit = "Exit";
+  Setting settings[SETTINGS_AMOUNT];
+  String exit = "Exit";
 };
 
 
@@ -134,22 +134,26 @@ void loop() {
         printMainMenu();
         Serial.println(arrowPos);
       }
+
       if (enc1.isClick()) {
         switch (arrowPos) {
+          // переход в Settings
           case 0:
             Serial.println("to settings");
             menu = Menu::Settings;
             printSettingsMenu();
             break;
           
+          // переход в Status
           case 1:
             Serial.println("to status");
             menu = Menu::Status;
             printStatusMenu();
             break;
           
+          // переключение между Start и Stop
           case 2:
-            start_process != start_process;
+            start_process = !start_process;
             Serial.println("switch to " + startStop[start_process]);
             printMainMenu();
             break;
@@ -162,49 +166,72 @@ void loop() {
       break;
     
     case Menu::Settings:
-      if (enc1.isTurn()) {
-        int increment = 0;  // локальная переменная направления
-    
-        // получаем направление   
-        if (enc1.isRight()) increment = 1;
-        if (enc1.isLeft()) increment = -1;
-        arrowPos += increment;  // двигаем курсор  
-        arrowPos = constrain(arrowPos, 0, SETTINGS_AMOUNT*2); // ограничиваем
+      // если кнопка не зажата
+      if (!enc1.isHold()) {
+        if (enc1.isTurn()) {
+          // получаем направление поворота энкодера
+          int increment = 0;
+          if (enc1.isRight()) increment = 1;
+          if (enc1.isLeft()) increment = -1;
+          // двигаем курсор
+          arrowPos += increment;  
+          arrowPos = constrain(arrowPos, 0, SETTINGS_AMOUNT*2); // ограничиваем
 
-        increment = 0;  // обнуляем инкремент
-        if (arrowPos < SETTINGS_AMOUNT*2) {
-          if (enc1.isRightH()) increment = 1;
-          if (enc1.isLeftH()) increment = -1;
-          if(arrowPos % 2 == 0) {
-            settingsWindow.settings[arrowPos / LCD_LINES].time_val += increment;
+          increment = 0;
+          if (arrowPos < SETTINGS_AMOUNT*2) {
+            if (enc1.isRightH()) increment = 1;
+            if (enc1.isLeftH()) increment = -1;
+            if(arrowPos % 2 == 0) {
+              settingsWindow.settings[arrowPos / LCD_LINES].time_val += increment;
+            }
+            else {
+              settingsWindow.settings[arrowPos / LCD_LINES].temp_val += increment;
+            }
           }
-          else {
-            settingsWindow.settings[arrowPos / LCD_LINES].temp_val += increment;
-          }
-          //vals[arrowPos] += increment;  // меняем параметры
+
+          printSettingsMenu();
+          Serial.println(arrowPos);
+        }
+      }
+      // если кнопка зажата
+      else if ((arrowPos != SETTINGS_AMOUNT*2) && enc1.isTurn()) {
+        // получаем направление поворота энкодера
+        int increment = 0;   
+        if (enc1.isRightH()) increment = 1;
+        if (enc1.isLeftH()) increment = -1;
+
+        // если стрелка на строке с Time, меняем время
+        if (arrowPos % 2 == 0) {
+          settingsWindow.settings[arrowPos / 2].time_val += increment;
+          settingsWindow.settings[arrowPos / 2].time_val = constrain(settingsWindow.settings[arrowPos / 2].time_val, 0, TIME_MAX);
+        }
+        // если стрелка на строке с Temp, меняем температуру
+        else {
+          settingsWindow.settings[arrowPos / 2].temp_val += increment;
+          settingsWindow.settings[arrowPos / 2].temp_val = constrain(settingsWindow.settings[arrowPos / 2].temp_val, 0, TIME_MAX);
         }
 
         printSettingsMenu();
-        Serial.println(arrowPos);
       }
 
-      if (enc1.isClick()) {
-        // Exit
-        if (arrowPos == SETTINGS_AMOUNT*2) {
-          lcd.clear();
-          arrowPos = 0;
-          printMainMenu();
-          Serial.println("MainWindow");
-          menu = Menu::Main;
-        }
-        else {
-          changeSetting(arrowPos);
-        }
+      // Exit
+      if (arrowPos == SETTINGS_AMOUNT*2 && enc1.isClick()) {
+        lcd.clear();
+        arrowPos = 0;
+        printMainMenu();
+        Serial.println("MainWindow");
+        menu = Menu::Main;
       }
+
       break;
 
     case Menu::Status:
-      //TODO
+      if (enc1.isClick()) {
+        arrowPos = 0;
+        Serial.println("to main menu");
+        menu = Menu::Main;
+        printMainMenu();
+      }
       break;
     }
 }
@@ -244,7 +271,7 @@ void printMainMenu(){
 //_____________________
 void printSettingsMenu() {  //Функция для вывода на экран меню настроек
   lcd.clear();  
-  screenPos = arrowPos / LCD_LINES;   // ищем номер экрана (0..3 - 0, 4..7 - 1)
+  screenPos = arrowPos / LCD_LINES;   // ищем номер экрана с парой "Time" и "Temp"
 
   for (byte i = 0; i < LCD_LINES; i++) {  // для всех строк
     lcd.setCursor(0, i);              // курсор в начало
@@ -278,91 +305,26 @@ void printSettingsMenu() {  //Функция для вывода на экран
 
 //_____________________
 void printStatusMenu() {
-  //TODO
-}
+  lcd.clear();
 
+  for (byte i = 0; i < LCD_LINES; i++) {
+    lcd.setCursor(0, i);
 
-//_____________________
-void changeSetting(uint8_t setting) {
-  while (!enc1.isClick()) {
-    int increment = 0;
-    int value = 0;
-
-    if (enc1.isTurn()) {
-      Serial.println("turning");
-      // получаем направление   
-      if (enc1.isRight()) increment = 1;
-      if (enc1.isLeft()) increment = -1;
-
-      switch (setting) {
-        // Time-0
-        case 0:
-          value = settingsWindow.settings[setting % 2].time_val;
-          value += increment;
-          value = constrain(value, 0, TIME_MAX - 1); // ограничиваем
-          settingsWindow.settings[setting % 2].time_val = value;
-          Serial.println(value);
-          break;
-        // Temp-0
-        case 1:
-          break;
-
-        // Time-1
-        case 2:
-          value = settingsWindow.settings[setting % 2].time_val;
-          value += increment;
-          value = constrain(value, 0, TIME_MAX - 1); // ограничиваем
-          settingsWindow.settings[setting % 2].time_val = value;
-          break;
-        // Temp-1
-        case 3:
-          break;
-        
-        // Time-2
-        case 4:
-          value = settingsWindow.settings[setting % 2].time_val;
-          value += increment;
-          value = constrain(value, 0, TIME_MAX - 1); // ограничиваем
-          settingsWindow.settings[setting % 2].time_val = value;
-          break;
-        // Temp-2
-        case 5:
-          break;
-        
-        // Time-3
-        case 6:
-          value = settingsWindow.settings[setting % 2].time_val;
-          value += increment;
-          value = constrain(value, 0, TIME_MAX - 1); // ограничиваем
-          settingsWindow.settings[setting % 2].time_val = value;
-          break;
-        // Temp-3
-        case 7:
-          break;
-        
-        // Time-4
-        case 8:
-          value = settingsWindow.settings[setting % 2].time_val;
-          value += increment;
-          value = constrain(value, 0, TIME_MAX - 1); // ограничиваем
-          settingsWindow.settings[setting % 2].time_val = value;
-          break;
-        // Temp-4
-        case 9:
-          break;
-        
-        // Time-5
-        case 10:
-          value = settingsWindow.settings[setting % 2].time_val;
-          value += increment;
-          value = constrain(value, 0, TIME_MAX - 1); // ограничиваем
-          settingsWindow.settings[setting % 2].time_val = value;
-          break;
-        // Temp-5
-        case 11:
-          break;
-      }
-      printSettingsMenu();
+    if (i == 0) {
+      lcd.print("Time " + String(getTime()));
+    }
+    else {
+      lcd.print("Temp " + String(getTemp()));
     }
   }
+}
+
+uint16_t getTime() {
+  // TODO
+  return 17;
+}
+
+uint16_t getTemp() {
+  // TODO
+  return 18;
 }
