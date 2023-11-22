@@ -4,7 +4,10 @@
 #define LINES 2   // количество строк дисплея
 #define SETTINGS_AMOUNT 13  // количество настроек
 #define SETTINGS_SETTING 12  // количество настроек
-#define SETTINGS_MENU 3
+#define SETTINGS_MENU 3 // количество настроек
+
+#define FAST_STEP 5  // количество настроек
+bool controlState = 0;  // клик
 
 // пины энкодера
 #define CLK 2
@@ -29,8 +32,9 @@ LiquidCrystal_I2C lcd(0x27, 16, 2); // адрес 0x27 или 0x3f
 
 int vals[SETTINGS_SETTING];  // массив параметров
 int8_t arrowPos = 0;
-
+int8_t entVal = 0;
 int8_t screenPos = 0; // номер "экрана"
+int8_t dataEntry = 0;
 
 Menu menu;
 
@@ -66,23 +70,21 @@ void setup() {
   Serial.begin(9600); //Волшебная цифра 
   enc1.setType(TYPE2); //Тип энкодера
 
-  lcd.init(); 
-  lcd.backlight(); 
+  lcd.init();
+  lcd.backlight();
 
-  menu = Menu::MainMenu; //Заходим сразу в главное меню
-  printMainMenu(); // Отображаем на экране главное меню
-  lcd.clear(); //предпусковое очищение экрана
+  menu = Menu::MainMenu;
   
-  Serial.println("Start"); 
-  //Ещё раз чистим экран и выводим привью
-  lcd.clear(); 
+  Serial.println("Start");
+  
+  lcd.clear();
   lcd.setCursor(0, 0); lcd.print("Brewery V 0.2");
   lcd.setCursor(0, 1); lcd.print("Turn the handle");
   
 }
 
 void loop() {
-  enc1.tick(); 
+  enc1.tick();
   
   switch (menu) {
 
@@ -101,7 +103,7 @@ void loop() {
         Serial.println(arrowPos);
         
       }
-      if (enc1.isClick()) { //По клику на энкодер проваливаемся в соответсвующие меню
+      if (enc1.isClick()) {
         if (0 == arrowPos) {
           lcd.clear();
           printSettingsValue();
@@ -116,25 +118,42 @@ void loop() {
           menu = Menu::StartStopSettings;
           lcd.clear();
           printMainMenu();
+
         }
       }
+
       break;
-    
+
     case Menu::SettingsValue: //Меню настроек
       if (enc1.isTurn()) {
       int increment = 0;  // локальная переменная направления
+    
       // получаем направление   
       if (enc1.isRight()) increment = 1;
       if (enc1.isLeft()) increment = -1;
       arrowPos += increment;  // двигаем курсор  
       arrowPos = constrain(arrowPos, 0, SETTINGS_AMOUNT - 1); // ограничиваем
+
       increment = 0;  // обнуляем инкремент
       
+
+        
       if (arrowPos < SETTINGS_SETTING) {
+        
         if (enc1.isRightH()) increment = 1;
         if (enc1.isLeftH()) increment = -1;
-        
-        vals[arrowPos] += increment;  // меняем параметры
+
+        vals[arrowPos] += increment;
+        if (arrowPos % 2 == 0) {
+          dataEntry = constrain(vals[arrowPos], 0, 60); // Ограничени для времени
+          vals[arrowPos] = dataEntry;
+        }
+        else {
+          dataEntry = constrain(vals[arrowPos], 0, 100); // Ограничени для температуры
+          vals[arrowPos] = dataEntry;
+        }
+
+        // vals[arrowPos] += increment;  // меняем параметры
       }
       
       printSettingsValue();
@@ -208,20 +227,21 @@ void printSettingsValue() {  //Функция для вывода на экра�
       lcd.print(": ");
       lcd.print(vals[LINES * screenPos + i]);
     }
+
   }
 }
 
 
 //_____________________
-void printMainMenu(){
-  lcd.clear();  
-  screenPos = arrowPos / LINES;   // ищем номер экрана (0..3 - 0, 4..7 - 1)
+  void printMainMenu(){
+    lcd.clear();  
+    screenPos = arrowPos / LINES;   // ищем номер экрана (0..3 - 0, 4..7 - 1)
 
-  for (byte i = 0; i < LINES; i++) {  // для всех строк
-    lcd.setCursor(0, i);              // курсор в начало
+    for (byte i = 0; i < LINES; i++) {  // для всех строк
+      lcd.setCursor(0, i);              // курсор в начало
 
-    // если курсор находится на выбранной строке
-    if (arrowPos == LINES * screenPos + i) lcd.write(126);  // рисуем стрелку
+      // если курсор находится на выбранной строке
+      if (arrowPos == LINES * screenPos + i) lcd.write(126);  // рисуем стрелку
     else lcd.write(32);     // рисуем пробел
 
     // если пункты меню закончились, покидаем цикл for
@@ -230,5 +250,5 @@ void printMainMenu(){
     // выводим имя и значение пункта меню
     lcd.print(settingsMainMenu[LINES * screenPos + i]);
   }
-}
 
+}
