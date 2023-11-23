@@ -176,19 +176,8 @@ void loop() {
           // двигаем курсор
           arrowPos += increment;  
           arrowPos = constrain(arrowPos, 0, SETTINGS_AMOUNT*2); // ограничиваем
-
           increment = 0;
-          if (arrowPos < SETTINGS_AMOUNT*2) {
-            if (enc1.isRightH()) increment = 1;
-            if (enc1.isLeftH()) increment = -1;
-            if(arrowPos % 2 == 0) {
-              settingsWindow.settings[arrowPos / LCD_LINES].time_val += increment;
-            }
-            else {
-              settingsWindow.settings[arrowPos / LCD_LINES].temp_val += increment;
-            }
-          }
-
+          
           printSettingsMenu();
           Serial.println(arrowPos);
         }
@@ -221,6 +210,10 @@ void loop() {
         printMainMenu();
         Serial.println("MainWindow");
         menu = Menu::Main;
+      }
+      // Багфикс. Если кликнули на кнопку не по пункту Exit, сбрасываем состояние нажатия
+      else {
+        enc1.isClick();
       }
 
       break;
