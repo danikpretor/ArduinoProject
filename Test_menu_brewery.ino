@@ -1,4 +1,4 @@
-#include <Vector.h>
+//#include <Vector.h>
 
 // пример с линейным меню
 #define LINES 2   // количество строк дисплея
@@ -158,12 +158,14 @@ void loop() {
       
       printSettingsValue();
       }
+
       if (enc1.isClick() && arrowPos == SETTINGS_AMOUNT-1){ //По нажатию на Exet мы выходим из соответсвующего меню
+        arrowPos = 0;
         lcd.clear();
         printMainMenu(); 
         Serial.println("SettingsValue");
         menu = Menu::MainMenu;
-        }
+      }
       break;
 
     case Menu::MainWindow:
