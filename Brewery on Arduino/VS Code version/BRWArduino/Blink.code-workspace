@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "../Blink"
+		},
+		{
+			"name": "Test",
+			"path": "../Test"
+		}
+	],
+	"settings": {}
+}
