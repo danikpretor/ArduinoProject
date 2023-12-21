@@ -86,11 +86,11 @@ uint32_t totalCyclSec = 0; // секунды
 
 uint32_t totalCurrentSec = 0; // передаём в секундах  
 uint32_t currentMillis = 0;
-
+//Переменные для записи времени с момента старта/запуска
 int timeHours = 0;; // часы
 int timeMins = 0;  // минуты
 int timeSecs = 0;  // секунды
-
+//Переменные для записи и вывода времени цикла
 int timeCyclHours = 0;; // часы
 int timeCyclMins = 0;  // минуты
 int timeCyclSecs = 0;  // секунды
