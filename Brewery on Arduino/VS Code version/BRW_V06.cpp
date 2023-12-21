@@ -30,7 +30,7 @@ int8_t entVal = 0;
 int8_t screenPos = 0; // номер "экрана"
 int8_t dataEntry = 0; // переменная для хранения данных в диапахоне от 0 до 60 и от 0 до 100
 
-bool settingPosition = false;  // переменная для ввода хгачений в настройка. Это флаг миняющий сой состояние при клике энкодера
+bool settingPosition = false;  // переменная для настройки. Флаг миняющий своё состояние при клике энкодера
 bool checkTE1 = 0;
 
 Menu menu;
@@ -172,7 +172,6 @@ void printSettingsValue() {  //Функция для вывода на экра�
         lcd.print(": ");
         lcd.print(vals[LINES * screenPos + i]);
       }
-
     }
   }
 
@@ -204,10 +203,6 @@ void f_pid(){ //Функция ПИД
     pid.input = TE1;   // сообщаем регулятору текущую температуру
     pid.getResult();
     analogWrite(RELE_5, pid.output);    
-    //ploter
-    //Serial.print("TE "); Serial.print(pid.input); Serial.print(' ');
-    //Serial.print("SET "); Serial.println(pid.setpoint);
-    //Serial.print("pid.output "); Serial.println(pid.output);
   }
 }
 
